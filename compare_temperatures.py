@@ -1,6 +1,8 @@
 import json
 import urllib.request
 
+from flask import Flask, jsonify, make_response, request 
+
 def url_builder(lat, lon):
     user_api = 'b13c69eca47b941b84b44306ea24c081'
     unit = 'metric'
@@ -54,6 +56,27 @@ else:
 print(f"{hotter_city} is hotter than {cooler_city}.")
 print(f"{hotter_city}: {hotter_temp}°C, {cooler_city}: {cooler_temp}°C")
 
+@app.route("/api/v1.0/businesses", methods=["GET"])
+def show_all_businesses():
+    return make_response( jsonify( businesses ), 200 )
+
+@app.route("/api/v1.0/businesses", methods=["POST"])
+def add_business():
+    next_id = businesses [-1]["id"] + 1
+    new_business = {
+        "id" : next_id,
+        "name" : request.form["name"],
+        "town" : request.form["town"],
+        "rating" : request.form["rating"],
+        "reviews" : []
+    }
+    businesses.append(new_business)
+    return make_response( jsonify( new_business ), 201)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+    
 '''
 Write a Python program compare_temperatures.py:
 1. That prompts the user for two latitude and longitude values representing a pair of locations and uses the
