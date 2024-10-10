@@ -76,22 +76,29 @@ def show_one_business(id):
     if id in businesses:
         return make_response( jsonify(  businesses[id] ), 200 )
     else: 
-        return make_response( jsonify( {"error": "Invalid business ID"} ), 404)
+        return make_response( jsonify( {"error" : "Invalid business ID"} ), 404)
 
 #Adding new element
 @app.route("/api/v1.0/businesses", methods=["POST"])
 def add_business():
-    next_id = str(uuid.uuid1()) #businesses[-1]["id"] + 1
-    new_business = { 
-        "id" : next_id,
-        "name" : request.form["name"],
-        "town" : request.form["town"],
-        "rating" : request.form["rating"],
-        "reviews" : {}
-    }
+    if  "name" in request.form and \
+        "town" in request.form and \
+        "rating" in request.form:
+        next_id = str(uuid.uuid1()) #businesses[-1]["id"] + 1
+        
+        new_business = { 
+            "id" : next_id,
+            "name" : request.form["name"],
+            "town" : request.form["town"],
+            "rating" : request.form["rating"],
+            "reviews" : {}
+        }
+
     #businesses.append(new_business)
-    businesses[next_id] = new_business
-    return make_response( jsonify( {next_id : new_business} ), 201)
+        businesses[next_id] = new_business
+        return make_response( jsonify( {next_id : new_business} ), 201)
+    else:
+        return make_response( jsonify( {"error" : "Missing form data"} ), 404)
 
 #Editing an element
 @app.route("/api/v1.0/businesses/<string:id>", methods=["PUT"])
