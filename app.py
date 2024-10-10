@@ -1,18 +1,20 @@
 
 
 from flask import Flask, jsonify, make_response, request 
+import uuid, random
 
 app = Flask(__name__)
 
-# @app.route("/", methods=["GET"])
-# def index():
-#     return make_response("<h1>Hello world</h1>", 200)
+'''
+ @app.route("/", methods=["GET"])
+ def index():
+     return make_response("<h1>Hello world</h1>", 200)
 
-# if __name__ == "__main__":
-#     app.run(debug=True)
-
-
-
+ if __name__ == "__main__":
+     app.run(debug=True)
+'''
+     
+'''
 businesses =  [
     {
         "id" : 1,
@@ -36,76 +38,113 @@ businesses =  [
         "reviews" : []
     }
 ]
+'''
 
+businesses =  {}
+
+#Generates dictionary of businesses
+def generate_dummy_data():
+    towns = [
+        'Coleraine', 'Banbridge', 'Belfast', 'Lisburn', 
+        'Ballymena', 'Derry', 'Newry', 'Enniskillen',
+        'Omagh', 'Ballymoney'
+    ]
+    businesses_dict = {}
+
+    for i in range(100):
+        id = str(uuid.uuid1())
+        name = "Biz " + str(i)
+        town = towns[random.randint (0, len(towns) - 1) ]
+        rating = random.randint(1, 5)
+        businesses_dict[id] = {
+            "name": name, 
+            "town": town, 
+            "rating": rating, 
+            "reviews": {}
+        }
+    return businesses_dict
+
+#Retrieving the entire collection
 @app.route("/api/v1.0/businesses", methods=["GET"])
 def show_all_businesses():
     return make_response( jsonify( businesses ), 200 )
 
-@app.route("/api/v1.0/businesses/<int:id>", methods=["GET"])
+#Retrieving a single element
+@app.route("/api/v1.0/businesses/<string:id>", methods=["GET"])
 def show_one_business(id):
-    data_to_return =  [ business for business in businesses if business['id'] == id ]
-    return make_response( jsonify(  data_to_return[0] ), 200 )
+    #data_to_return =  [ business for business in businesses if business['id'] == id ]
+    return make_response( jsonify(  businesses[id] ), 200 )
 
+#Adding new element
 @app.route("/api/v1.0/businesses", methods=["POST"])
 def add_business():
-    next_id = businesses[-1]["id"] + 1
+    next_id = str(uuid.uuid1()) #businesses[-1]["id"] + 1
     new_business = { 
         "id" : next_id,
         "name" : request.form["name"],
         "town" : request.form["town"],
         "rating" : request.form["rating"],
-        "reviews" : []
+        "reviews" : {}
     }
-    businesses.append(new_business)
-    return make_response( jsonify( new_business ), 201)
+    #businesses.append(new_business)
+    businesses[next_id] = new_business
+    return make_response( jsonify( {next_id : new_business} ), 201)
 
-@app.route("/api/v1.0/businesses/<int:id>", methods=["PUT"])
+#Editing an element
+@app.route("/api/v1.0/businesses/<string:id>", methods=["PUT"])
 def edit_business(id):
-    for business in businesses:
-        if business["id"] == id:
-            business["name"] = request.form["name"]
-            business["town"] = request.form["town"]
-            business["rating"] = request.form["rating"]
-            break
-    return make_response(jsonify (business), 200)
+    #for business in businesses:
+        #if business["id"] == id:
+    businesses[id]["name"] = request.form["name"]
+    businesses[id]["town"] = request.form["town"]
+    businesses[id]["rating"] = request.form["rating"]
+    return make_response(jsonify ( {id : businesses[id]} ), 200)
 
-@app.route("/api/v1.0/businesses/<int:id>", methods=["DELETE"])
+#Deleting an element
+@app.route("/api/v1.0/businesses/<string:id>", methods=["DELETE"])
 def delete_business(id):
+    '''
     for business in businesses:
         if business["id"] == id:
             businesses.remove(business)
             break
+    '''
+    del businesses[id]
     return make_response(jsonify ({}), 200)
 
-@app.route("/api/v1.0/businesses/<int:id>/reviews", methods=["GET"])
+#Retrieving sub-document collection
+@app.route("/api/v1.0/businesses/<string:id>/reviews", methods=["GET"])
 def fetch_all_reviews(id):
+    '''
     for business in businesses:
         if business["id"] == id:
             break
-    return make_response(jsonify (business["reviews"]), 200)
+    '''
+      
+    return make_response(jsonify (businesses[id]["reviews"]), 200)
 
-@app.route("/api/v1.0/businesses/<int:b_id>/reviews", methods=["POST"])
+#Adding new element to sub-document 
+@app.route("/api/v1.0/businesses/<string:b_id>/reviews", methods=["POST"])
 def add_new_review(b_id):
     for business in businesses:
         if business["id"] == b_id:
             if len(business ["reviews"] ) == 0:
-                new_review_id = 1
+                new_review_id = str(uuid.uuid1())
             else:
                 new_review_id = business["reviews"][-1]["id"] + 1
-            try:
-                new_review = {
-                    "id" : new_review_id,
-                    "username": request.form["username"],
-                    "comment": request.form["comment"],
-                    "stars": request.form["stars"]
+            new_review = {
+                "id" : new_review_id,
+                "username": request.form["username"],
+                "comment": request.form["comment"],
+                "stars": request.form["stars"]
                 }
-            except KeyError as e:
-                return make_response(jsonify({"error": f"Missing key: {str(e)}"}), 400)
-            business["reviews"].append(new_review)
+            #business["reviews"].append(new_review)
+            businesses[b_id]["reviews"][new_review_id] = new_review
             break
-    return make_response(jsonify (new_review), 201)
+    return make_response(jsonify ( {new_review_id : new_review} ), 201)
 
-@app.route("/api/v1.0/businesses/<int:b_id>/reviews/<int:r_id>", methods=["GET"])
+#Retrieving a single element from sub-document
+@app.route("/api/v1.0/businesses/<string:b_id>/reviews/<string:r_id>", methods=["GET"])
 def fetch_one_review(b_id, r_id):
     for business in businesses:
         if business["id"] == b_id:
@@ -114,7 +153,8 @@ def fetch_one_review(b_id, r_id):
             break
     return make_response(jsonify (review), 200)
 
-@app.route("/api/v1.0/businesses/<int:b_id>/reviews/<int:r_id>", methods=["PUT"])
+#Edit single element from sub-document 
+@app.route("/api/v1.0/businesses/<string:b_id>/reviews/<string:r_id>", methods=["PUT"])
 def edit_review(b_id, r_id):
     for business in businesses:
         if business["id"] == b_id:
@@ -126,8 +166,10 @@ def edit_review(b_id, r_id):
                     break
     return make_response(jsonify (review), 200)
 
-@app.route("/api/v1.0/businesses/<int:b_id>/reviews/<int:r_id>", methods=["DELETE"])
+#Deleting single element from sub-document
+@app.route("/api/v1.0/businesses/<string:b_id>/reviews/<string:r_id>", methods=["DELETE"])
 def delete_review(b_id, r_id):
+    '''
     for business in businesses:
         if business["id"] == b_id:
             for review in business["reviews"]:
@@ -135,7 +177,10 @@ def delete_review(b_id, r_id):
                     business["reviews"].remove(review)
                     break
             break
+    '''
+    del businesses[b_id]["reviews"][r_id]
     return make_response(jsonify ({}), 200)
 
 if __name__ == "__main__":
+    businesses = generate_dummy_data()
     app.run(port=8000, debug=True)
