@@ -100,6 +100,12 @@ def add_business():
     else:
         return make_response( jsonify( {"error" : "Missing form data"} ), 404)
 
+'''
+A further level of error trapping might be to test the type and range of each
+parameter to check that (for example) the rating is an integer between 1 and 5.
+This level of checking is left for you to complete as an exercise.
+'''
+
 #Editing an element
 @app.route("/api/v1.0/businesses/<string:id>", methods=["PUT"])
 def edit_business(id):
