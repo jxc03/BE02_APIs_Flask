@@ -73,7 +73,10 @@ def show_all_businesses():
 @app.route("/api/v1.0/businesses/<string:id>", methods=["GET"])
 def show_one_business(id):
     #data_to_return =  [ business for business in businesses if business['id'] == id ]
-    return make_response( jsonify(  businesses[id] ), 200 )
+    if id in businesses:
+        return make_response( jsonify(  businesses[id] ), 200 )
+    else: 
+        return make_response( jsonify( {"error": "Invalid business ID"} ), 404)
 
 #Adding new element
 @app.route("/api/v1.0/businesses", methods=["POST"])
