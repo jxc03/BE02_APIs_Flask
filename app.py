@@ -120,27 +120,29 @@ def fetch_all_reviews(id):
         if business["id"] == id:
             break
     '''
-      
     return make_response(jsonify (businesses[id]["reviews"]), 200)
 
 #Adding new element to sub-document 
 @app.route("/api/v1.0/businesses/<string:b_id>/reviews", methods=["POST"])
 def add_new_review(b_id):
+    '''
     for business in businesses:
         if business["id"] == b_id:
             if len(business ["reviews"] ) == 0:
                 new_review_id = str(uuid.uuid1())
             else:
                 new_review_id = business["reviews"][-1]["id"] + 1
-            new_review = {
-                "id" : new_review_id,
-                "username": request.form["username"],
-                "comment": request.form["comment"],
-                "stars": request.form["stars"]
-                }
+    '''
+    new_review_id = str(uuid.uuid1())
+    new_review = {
+        "id" : new_review_id,
+        "username": request.form["username"],
+        "comment": request.form["comment"],
+        "stars": request.form["stars"]
+        }
             #business["reviews"].append(new_review)
-            businesses[b_id]["reviews"][new_review_id] = new_review
-            break
+    businesses[b_id]["reviews"][new_review_id] = new_review
+            #break
     return make_response(jsonify ( {new_review_id : new_review} ), 201)
 
 #Retrieving a single element from sub-document
@@ -156,15 +158,17 @@ def fetch_one_review(b_id, r_id):
 #Edit single element from sub-document 
 @app.route("/api/v1.0/businesses/<string:b_id>/reviews/<string:r_id>", methods=["PUT"])
 def edit_review(b_id, r_id):
+    '''
     for business in businesses:
         if business["id"] == b_id:
             for review in business["reviews"]:
                 if review["id"] == r_id:
-                    review["username"] = request.form["username"]
-                    review["comment"] = request.form["comment"]
-                    review["stars"] = request.form["stars"]
-                    break
-    return make_response(jsonify (review), 200)
+                    '''
+    businesses[b_id]["username"] = request.form["username"]
+    businesses[b_id]["comment"] = request.form["comment"]
+    businesses[b_id]["stars"] = request.form["stars"]
+                    #break
+    return make_response(jsonify ( {id : businesses[id]} ), 200)
 
 #Deleting single element from sub-document
 @app.route("/api/v1.0/businesses/<string:b_id>/reviews/<string:r_id>", methods=["DELETE"])
