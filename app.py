@@ -78,14 +78,38 @@ def show_one_business(id):
     else: 
         return make_response( jsonify( {"error" : "Invalid business ID"} ), 404)
 
+#Need to check over
 #Adding new element
-@app.route("/api/v1.0/businesses", methods=["POST"])
-def add_business():
+@app.route("/api/v1.0/businesses", methods=["POST"]) #Route route
+def add_business(): #Defines function
+    
+    #If all required fields are present 
     if  "name" in request.form and \
         "town" in request.form and \
         "rating" in request.form:
+
+        #Validation if 'name' is a string and not empty
+        name = request.form["name"] #Gets the 'name' from data submitted
+        if not isinstance(name, str) or not name.strip(): #Checks if 'name' is not a string or empty
+            return make_response( jsonify( {"error" : "Missing business name"} ), 404) #Returns error if invalid with 404 status 
+
+        #Validation if 'town' is a string and not empty
+        town = request.form["town"] #Gets the 'town' from data submitted
+        if not isinstance(name, str) or not town.strip(): #Checks if 'town' is not a string or empty
+            return make_response( jsonify ( {"error" : "Missing town"} ), 404) #Returns error if invalid with 404 status
+
+        #Validation if 'rating' is a between 1 and 5 and an integer
+        try: 
+            rating = int(request.form["rating"]) #Gets the 'rating' from data submitted and converts to integer
+            if rating not in range(1, 6): #Checks if rating is not between 1 and 5
+                return make_response( jsonify ( {"error": "Rating must be between 1 and 5"} ), 404) #Returns error if invalid with 404 status
+        except ValueError:
+            return make_response( jsonify ( {"error": "Rating must be an integer"} ), 404) #Returns error if invalid with 404 status
+
+        #Creates a ID for the new business
         next_id = str(uuid.uuid1()) #businesses[-1]["id"] + 1
-        
+
+        #Creates the new business
         new_business = { 
             "id" : next_id,
             "name" : request.form["name"],
@@ -93,28 +117,64 @@ def add_business():
             "rating" : request.form["rating"],
             "reviews" : {}
         }
-
-    #businesses.append(new_business)
-        businesses[next_id] = new_business
-        return make_response( jsonify( {next_id : new_business} ), 201)
+    
+        #Adds the new business to the dictionary
+        businesses[next_id] = new_business #Uses 'next_id' as the key to add new business to businesses dictionary
+        return make_response( jsonify( {next_id : new_business} ), 201) #Returns the new business data with 201 status
     else:
-        return make_response( jsonify( {"error" : "Missing form data"} ), 404)
+        return make_response( jsonify( {"error" : "Missing form data"} ), 404) #Returns error message if invalide with 404 status 
+
 
 '''
 A further level of error trapping might be to test the type and range of each
 parameter to check that (for example) the rating is an integer between 1 and 5.
 This level of checking is left for you to complete as an exercise.
+
+1. 
+rating = int(request.form["rating"])
+if rating not in range(1, 6)
 '''
 
-#Editing an element
-@app.route("/api/v1.0/businesses/<string:id>", methods=["PUT"])
-def edit_business(id):
-    #for business in businesses:
-        #if business["id"] == id:
-    businesses[id]["name"] = request.form["name"]
-    businesses[id]["town"] = request.form["town"]
-    businesses[id]["rating"] = request.form["rating"]
-    return make_response(jsonify ( {id : businesses[id]} ), 200)
+#Editing an element (business)
+@app.route("/api/v1.0/businesses/<string:id>", methods=["PUT"]) #Root route
+def edit_business(id): #Defines function, takes id as input
+    
+    #Validation if there are fields to update
+    if not any(field in request.form for field in ["name", "town", "rating"]): #Checks if there is no data in field to update
+        return make_response( jsonify ( {"error" : "There is no fields to update"} ), 404) #Returns error if no fields are provided with 404 status
+
+    #Validation if business ID exists in businesses dictionary
+    if id not in businesses: #Checks if there is no matching ID
+        return make_response( jsonify ( {"error" : "Invalid business ID"} ), 404) #Returns error if ID doesn't match to ID in dictionary
+    
+    #Validation for 'name'
+    if "name" in request.form:  #Checks if 'name' is provided
+        name = request.form["name"].strip() #Gets 'name' and strips whitespace
+        #Validate the name
+        if not name or not name.isalpha(): #Checks if 'name' is not empty and is a string
+            return make_response( jsonify ( {"error": "Name must be a string and not empty"} ), 404) #Returns error if 'name' is not a string or empty with 404 status
+        businesses[id]["name"] = name  #Updates the name of the business
+
+    #Validation for 'town'
+    if "town" in request.form: #Checks if 'town' is provided
+        town = request.form["town"].strip() #Gets 'town'and strips whitespace
+        #Validate the town
+        if not town or not town.isalpha: #Checks if 'town' not empty and is a string
+            return make_response( jsonify ( {"error": "Town must be a string and not empty"} ), 404) #Returns error if 'town' is not a string or empty with 404 status
+        businesses[id]["town"] = town #Updates the town of the business
+
+    #Validation for 'rating'
+    if "rating" in request.form: #Checks if 'rating' is provided
+        try:
+            rating = int(request.form["rating"]) #Converts rating to integer
+            if rating in range(1, 6): #Checks if rating is between 1 and 5
+                businesses[id]["rating"] = rating #Updates the rating of the business
+            else:
+                return make_response( jsonify ( {"error": "Rating must be between 1 and 5"} ), 404) #Returns error if rating is not between 1 and 5 with 404 status
+        except ValueError:
+            return make_response( jsonify ( {"error": "Rating must be an integer"} ), 404) #Returns error if rating is not a number with 404 status
+                
+    return make_response(jsonify (businesses[id]), 200) #Returns the updated business data with 200 status
 
 #Deleting an element
 @app.route("/api/v1.0/businesses/<string:id>", methods=["DELETE"])
