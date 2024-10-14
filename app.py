@@ -179,14 +179,11 @@ def edit_business(id): #Defines function, takes id as input
 #Deleting an element
 @app.route("/api/v1.0/businesses/<string:id>", methods=["DELETE"])
 def delete_business(id):
-    '''
-    for business in businesses:
-        if business["id"] == id:
-            businesses.remove(business)
-            break
-    '''
-    del businesses[id]
-    return make_response(jsonify ({}), 200)
+    if id in businesses:
+        del businesses[id]
+        return make_response(jsonify ({}), 200)
+    else:
+        return make_response(jsonify ({"error" : "Invalid business ID"}), 404)
 
 #Retrieving sub-document collection
 @app.route("/api/v1.0/businesses/<string:id>/reviews", methods=["GET"])
